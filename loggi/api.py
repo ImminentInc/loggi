@@ -68,12 +68,15 @@ class LoggingAPI:
             headers=self.auth.auth_credentials()
         ) as session:
             url = f'{LOGGING_API_URL}/write'
+            print(self.auth.auth_credentials())
 
             async with session.post(url, json=log) as response:
-                if response.status == 401 \
-                and (await response.json())['detail'] == 'Token expired':
+                if (await response.json())['detail'] == 'Token expired':
                     logging.debug('Token expired')
                     await self.auth.refresh_token()
                     logging.debug('Write log to remote server again')
                     await self.write(log)
-                logging.debug('Log successful writed')
+                elif response.status == 201:
+                    logging.debug('Log successful writed')
+                elif response.status == 401:
+                    raise UnauthorizedException('Failed to log in')

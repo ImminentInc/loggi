@@ -1,6 +1,5 @@
 import logging
-import traceback
-import sys
+import asyncio
 
 from types import FrameType
 from typing import Optional
@@ -9,7 +8,6 @@ from api import LoggingAPI
 from debug_details.all_info import debug_info
 
 from inspect import currentframe  # For get details about exception/info
-import asyncio
 
 
 class Singleton(type):
@@ -33,11 +31,10 @@ class Loggi(metaclass=Singleton):
 		self.__project_name = project_name
 		self.__api = api
 		
-		if isinstance(additional_info, type(None)) \
-		or isinstance(additional_info, type(dict)):
+		if isinstance(additional_info, dict) or not additional_info:
 			self.__additional_info = additional_info
 		else:
-			raise TypeError('additional_info must be type dict or None')
+			raise TypeError('additional_info must be type dict')
 
 	async def __log(
 		self, 
@@ -101,11 +98,10 @@ class Loggi(metaclass=Singleton):
 
 	def set_additional_info(self, data: dict):
 		logging.debug('Setting additional info')
-		if isinstance(data, type(None)) \
-		or isinstance(data, type(dict)):
+		if isinstance(data, dict):
 			self.__additional_info = data
 		else:
-			raise TypeError('additional_info must be type dict or None')
+			raise TypeError('additional_info must be type dict')
 
 	def get_project_name(self) -> str:
 		return self.__project_name
