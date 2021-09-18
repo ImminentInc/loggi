@@ -1,7 +1,8 @@
 import asyncio
+import logging
 import aiohttp
 
-from config import AUTH_API_URL, LOGGING_API_URL
+from defaults import AUTH_API_URL, LOGGING_API_URL
 from exceptions import UnauthorizedException
 
 
@@ -13,6 +14,7 @@ class Auth:
         self.__token = None
 
     async def login(self) -> None:
+        logging.debug('Starting user login')
         async with aiohttp.ClientSession() as session:
             url = f'{AUTH_API_URL}/login'
 
@@ -28,10 +30,14 @@ class Auth:
                     raise UnauthorizedException(error_detail)
                 self.__token = (await response.json())['token']
 
+                logging.debug('User logined')
+
     def auth_credentials(self) -> dict[str, str]:
+        logging.debug('Set auth credentials')
         return {'Authorization': f'Bearer {self.__token}'}
 
     async def refresh_token(self) -> str:
+        logging.debug('Creating new token')
         if self.__token is None:
             raise UnauthorizedException('User is not logined.')
 
@@ -40,8 +46,8 @@ class Auth:
 
             async with session.get(url) as response:
                 new_token = (await response.json())['token']
+                logging.debug('Successful created new token')
                 self.__token = new_token
-        return new_token
 
     def get_token(self) -> str:
         if self.__token is None:
@@ -49,4 +55,25 @@ class Auth:
         return self.__token
 
 
-# class LoggingAPI:
+class LoggingAPI:
+    def __init__(self, auth: Auth):
+        self.auth = auth
+        asyncio.run(auth.login())
+
+    async def write(self, log: dict) -> None:
+        """ Write log to remote server(Loggi) """
+        
+        logging.debug('Writing log to remote server')
+        async with aiohttp.ClientSession(
+            headers=self.auth.auth_credentials()
+        ) as session:
+            url = f'{LOGGING_API_URL}/write'
+
+            async with session.post(url, json=log) as response:
+                if response.status == 401 \
+                and (await response.json())['detail'] == 'Token expired':
+                    logging.debug('Token expired')
+                    await self.auth.refresh_token()
+                    logging.debug('Write log to remote server again')
+                    await self.write(log)
+                logging.debug('Log successful writed')

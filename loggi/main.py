@@ -1,33 +1,19 @@
-# from loggi import logger, api
+import asyncio
+from api import LoggingAPI, Auth
+from logger import Loggi, on_debug_mode
 
 
-# auth = api.Auth('illya', 'illya')
-# api = api.LoggingAPI(auth)
+on_debug_mode()
+auth = Auth(username='string', password='string')
+log_api = LoggingAPI(auth)
 
-# logging = logger.Logger(api)
-# logging.debug('hello')
-
-
+logger = Loggi(project_name='Bot1', api=log_api)
 
 
-# from api import Auth
-# import asyncio
-# import time
+async def main():
+    try:
+        ee
+    except Exception as e:
+        await logger.error(e)
 
-# auth = Auth(username='string', password='string')
-
-# asyncio.run(auth.login())
-# print(auth.get_token())
-
-# print('___')
-# time.sleep(5)
-# asyncio.run(auth.refresh_token())
-# print(auth.get_token())
-
-
-
-from logger import Loggi
-
-logger = Loggi('aa')
-logger.getLogger('aa')
-print(logger.info('debug'))
+print(asyncio.run(main()))
